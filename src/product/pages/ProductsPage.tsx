@@ -17,7 +17,7 @@ import {
     TableRow,
 } from "../../components/ui/table";
 
-import { GetProduct, GetProducts } from "../api/product.service";
+import { CreateProduct, GetProduct, GetProducts, UpdateProduct } from "../api/product.service";
 import type { ResponseProductsDTO } from "../dto/ResponseProductsDTO";
 
 type ProductoUI = {
@@ -65,16 +65,60 @@ export default function ProductsPage() {
             alert("Error al obtener producto");
         }
     };
-    const handleEdit = (id: string) => {
-        console.log("Editar producto:", id);
+    const handleEdit = async (idProduct: string) => {
+        try {
+            setIsLoading(true);
+
+            const created = await UpdateProduct("M3", {
+                idProduct: "M3",
+                nameProduct: "Funcion",
+                Stock: 10,
+            });
+
+            const productoActualizado: ProductoUI = {
+                id: created.idProduct,
+                nombre: created.nameProduct,
+                stock: created.Stock,
+            };
+
+            setProductos((prev) =>
+                prev.map((p) => (p.id === idProduct ? productoActualizado : p))
+            );
+        } catch (error) {
+            console.error("Error al ingresar producto del backend", error);
+            alert("Error al leer datos del backend");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDelete = (id: string) => {
         console.log("Eliminar producto:", id);
     };
 
-    const handleAddProduct = () => {
-        console.log("Agregar nuevo producto");
+    const handleAddProduct = async () => {
+        try {
+            setIsLoading(true);
+
+            const created = await CreateProduct({
+                idProduct: "M3",
+                nameProduct: "Gabardina",
+                Stock: 40,
+            });
+
+            const nuevo: ProductoUI = {
+                id: created.idProduct,
+                nombre: created.nameProduct,
+                stock: created.Stock,
+            };
+
+            setProductos((prev) => [...prev, nuevo]);
+        } catch (error) {
+            console.error("Error al ingresar producto del backend", error);
+            alert("Error al leer datos del backend");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleLeerDatos = async () => {

@@ -34,19 +34,60 @@ export const GetProduct = async (idProduct:string): Promise<ResponseProductsDTO>
   return data;
 };
 
+interface CreateProductDTO {
+  idProduct: string;
+  nameProduct: string;
+  Stock: number;
+}
 
-export const CreateProduct = async (idProduct:string): Promise<ResponseProductsDTO> => {
+
+export const CreateProduct = async (
+  data: CreateProductDTO
+): Promise<ResponseProductsDTO> => {
   const response = await fetch(
-    `https://a2lum56xy0.execute-api.us-east-1.amazonaws.com/producto/${idProduct}`,
+    "https://a2lum56xy0.execute-api.us-east-1.amazonaws.com/producto",
     {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
     }
   );
 
   if (!response.ok) {
-    throw new Error(`Error al obtener productos: ${response.status}`);
+    throw new Error(`Error al crear producto: ${response.status}`);
   }
 
-  const data: ResponseProductsDTO = await response.json();
-  return data;
+  const created: ResponseProductsDTO = await response.json();
+  return created;
+};
+
+interface UpdateProductDTO {
+  idProduct: string;
+  nameProduct: string;
+  Stock: number;
+}
+
+export const UpdateProduct = async (
+  idProduct: string,
+  data: UpdateProductDTO
+): Promise<ResponseProductsDTO> => {
+  const response = await fetch(
+    `https://a2lum56xy0.execute-api.us-east-1.amazonaws.com/producto/${idProduct}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Error al actualizar producto: ${response.status}`);
+  }
+
+  const update: ResponseProductsDTO = await response.json();
+  return update;
 };
