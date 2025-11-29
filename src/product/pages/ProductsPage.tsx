@@ -19,6 +19,7 @@ import {
 
 import { CreateProduct, GetProduct, GetProducts, UpdateProduct } from "../api/product.service";
 import type { ResponseProductsDTO } from "../dto/ResponseProductsDTO";
+import { UpsertTestModal } from "../ui/components/UpsertTestModal";
 
 type ProductoUI = {
     id: string;
@@ -29,29 +30,9 @@ type ProductoUI = {
 export default function ProductsPage() {
     const [productos, setProductos] = useState<ProductoUI[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-
-    // estado del formulario
-    const [form, setForm] = useState<{
-        idProduct: string;
-        nameProduct: string;
-        Stock: number;
-    }>({
-        idProduct: "",
-        nameProduct: "",
-        Stock: 0,
-    });
-
-    const handleChangeForm = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        const { name, value } = e.target;
-
-        setForm((prev) => ({
-            ...prev,
-            [name]:
-                name === "Stock" ? Number(value) || 0 : value,
-        }));
-    };
+    // Estado para controlar la visibilidad del modal
+    const [isDialogInsertOpen, setIsDialogInsertOpen] = useState(false);
+    const [isDialogUpdateOpen, setIsDialogUptadeOpen] = useState(false);
 
     const handleView = async (id: string) => {
         try {
@@ -145,6 +126,34 @@ export default function ProductsPage() {
 
     return (
         <TooltipProvider>
+            {/* 1. Encabezado con título y botón de "Nuevo Ensayo" */}
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-semibold text-gray-800">
+                    Gestión de Ensayos
+                </h1>
+                <Button
+                    className="flex items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white shadow-md rounded-lg px-4 py-2 h-auto"
+                    onClick={() => setIsDialogInsertOpen(true)}
+                >
+                    <Plus className="w-4 h-4" /> Nuevo Producto
+                </Button>
+                <UpsertTestModal
+                    open={isDialogInsertOpen}
+                    onOpenChange={setIsDialogInsertOpen}
+                    action="CREATE"
+                />
+                <Button
+                    className="flex items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white shadow-md rounded-lg px-4 py-2 h-auto"
+                    onClick={() => setIsDialogUptadeOpen(true)}
+                >
+                    <Plus className="w-4 h-4" /> Actualizar Producto
+                </Button>
+                <UpsertTestModal
+                    open={isDialogUpdateOpen}
+                    onOpenChange={setIsDialogUptadeOpen}
+                    action="UPDATE"
+                />
+            </div>
             <div className="min-h-screen bg-background p-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-8 gap-4">
@@ -159,60 +168,7 @@ export default function ProductsPage() {
                             </Button>
                         </div>
                     </div>
-                    {/* Formulario de producto */}
-                    <div className="mb-8 border rounded-lg bg-card shadow-sm p-4 space-y-4">
-                        <h2 className="text-lg font-semibold">
-                            Formulario de Producto
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="flex flex-col gap-1">
-                                <label className="text-sm text-muted-foreground">
-                                    idProduct
-                                </label>
-                                <input
-                                    name="idProduct"
-                                    value={form.idProduct}
-                                    onChange={handleChangeForm}
-                                    className="border rounded px-2 py-1 text-sm bg-background"
-                                    placeholder="M1"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-sm text-muted-foreground">
-                                    nameProduct
-                                </label>
-                                <input
-                                    name="nameProduct"
-                                    value={form.nameProduct}
-                                    onChange={handleChangeForm}
-                                    className="border rounded px-2 py-1 text-sm bg-background"
-                                    placeholder="Pantalón"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-sm text-muted-foreground">
-                                    Stock
-                                </label>
-                                <input
-                                    name="Stock"
-                                    type="number"
-                                    value={form.Stock}
-                                    onChange={handleChangeForm}
-                                    className="border rounded px-2 py-1 text-sm bg-background"
-                                    placeholder="0"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button onClick={handleAddProduct}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Agregar Producto
-                            </Button>
-                            <Button variant="outline" onClick={() => 2}>
-                                Actualizar Producto
-                            </Button>
-                        </div>
-                    </div>
+
 
                     <div className="border rounded-lg bg-card shadow-sm">
                         <Table>
