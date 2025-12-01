@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 
 import {
@@ -30,77 +30,14 @@ type ProductoUI = {
 export default function ProductsPage() {
     const [productos, setProductos] = useState<ProductoUI[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    // Estado para controlar la visibilidad del modal
     const [isDialogInsertOpen, setIsDialogInsertOpen] = useState(false);
-    const [isDialogUpdateOpen, setIsDialogUptadeOpen] = useState(false);
+    const [isDialogUpdateOpen, setIsDialogUpdateOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<ResponseProductsDTO | null>(null);
 
-    const handleView = async (id: string) => {
-        try {
-            const producto = await GetProduct(id);
-            console.log("Producto obtenido:", producto);
-            alert(
-                `ID: ${producto.idProduct}\nNombre: ${producto.nameProduct}\nStock: ${producto.Stock}`
-            );
-        } catch (error) {
-            console.error("Error al obtener producto", error);
-            alert("Error al obtener producto");
-        }
-    };
-    const handleEdit = async (idProduct: string) => {
-        try {
-            setIsLoading(true);
-
-            const created = await UpdateProduct("M3", {
-                idProduct: "M3",
-                nameProduct: "Funcion",
-                Stock: 10,
-            });
-
-            const productoActualizado: ProductoUI = {
-                id: created.idProduct,
-                nombre: created.nameProduct,
-                stock: created.Stock,
-            };
-
-            setProductos((prev) =>
-                prev.map((p) => (p.id === idProduct ? productoActualizado : p))
-            );
-        } catch (error) {
-            console.error("Error al ingresar producto del backend", error);
-            alert("Error al leer datos del backend");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleDelete = (id: string) => {
-        console.log("Eliminar producto:", id);
-    };
-
-    const handleAddProduct = async () => {
-        try {
-            setIsLoading(true);
-
-            const created = await CreateProduct({
-                idProduct: "M3",
-                nameProduct: "Gabardina",
-                Stock: 40,
-            });
-
-            const nuevo: ProductoUI = {
-                id: created.idProduct,
-                nombre: created.nameProduct,
-                stock: created.Stock,
-            };
-
-            setProductos((prev) => [...prev, nuevo]);
-        } catch (error) {
-            console.error("Error al ingresar producto del backend", error);
-            alert("Error al leer datos del backend");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Cargar productos al montar el componente
+    useEffect(() => {
+        handleLeerDatos();
+    }, []);
 
     const handleLeerDatos = async () => {
         try {
@@ -123,51 +60,66 @@ export default function ProductsPage() {
         }
     };
 
+    const handleView = async (id: string) => {
+        try {
+            const producto = await GetProduct(id);
+            console.log("Producto obtenido:", producto);
+            alert(
+                `ID: ${producto.idProduct}\nNombre: ${producto.nameProduct}\nStock: ${producto.Stock}`
+            );
+        } catch (error) {
+            console.error("Error al obtener producto", error);
+            alert("Error al obtener producto");
+        }
+    };
+
+    const handleEdit = (producto: ProductoUI) => {
+        setSelectedProduct({
+            idProduct: producto.id,
+            nameProduct: producto.nombre,
+            Stock: producto.stock,
+        });
+        setIsDialogUpdateOpen(true);
+    };
+
+    const handleDelete = (id: string) => {
+        console.log("Eliminar producto:", id);
+    };
+
 
     return (
         <TooltipProvider>
-            {/* 1. Encabezado con título y botón de "Nuevo Ensayo" */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800">
-                    Gestión de Ensayos
-                </h1>
-                <Button
-                    className="flex items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white shadow-md rounded-lg px-4 py-2 h-auto"
-                    onClick={() => setIsDialogInsertOpen(true)}
-                >
-                    <Plus className="w-4 h-4" /> Nuevo Producto
-                </Button>
-                <UpsertTestModal
-                    open={isDialogInsertOpen}
-                    onOpenChange={setIsDialogInsertOpen}
-                    action="CREATE"
-                />
-                <Button
-                    className="flex items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white shadow-md rounded-lg px-4 py-2 h-auto"
-                    onClick={() => setIsDialogUptadeOpen(true)}
-                >
-                    <Plus className="w-4 h-4" /> Actualizar Producto
-                </Button>
-                <UpsertTestModal
-                    open={isDialogUpdateOpen}
-                    onOpenChange={setIsDialogUptadeOpen}
-                    action="UPDATE"
-                />
-            </div>
-            <div className="min-h-screen bg-background p-8">
+            <div className="min-h-screen bg-background p-8 w-full">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-8 gap-4">
                         <h1 className="text-foreground">Gestión de Productos</h1>
                         <div className="flex gap-2">
-                            <Button onClick={handleAddProduct}>
+                            <Button
+                                onClick={() => setIsDialogInsertOpen(true)}
+                                className="bg-blue-800 hover:bg-blue-900"
+                            >
                                 <Plus className="mr-2 h-4 w-4" />
-                                Agregar Producto
-                            </Button>
-                            <Button onClick={handleLeerDatos} disabled={isLoading}>
-                                {isLoading ? "Cargando..." : "Leer Datos"}
+                                Nuevo Producto
                             </Button>
                         </div>
                     </div>
+
+                    <UpsertTestModal
+                        open={isDialogInsertOpen}
+                        onOpenChange={setIsDialogInsertOpen}
+                        action="CREATE"
+                        onSuccess={handleLeerDatos}
+                    />
+
+                    {selectedProduct && (
+                        <UpsertTestModal
+                            open={isDialogUpdateOpen}
+                            onOpenChange={setIsDialogUpdateOpen}
+                            action="UPDATE"
+                            product={selectedProduct}
+                            onSuccess={handleLeerDatos}
+                        />
+                    )}
 
 
                     <div className="border rounded-lg bg-card shadow-sm">
@@ -202,7 +154,7 @@ export default function ProductsPage() {
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => handleView(producto.id)}
-                                                            className="hover:bg-primary/10 hover:text-primary"
+                                                            className=""
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
@@ -217,7 +169,7 @@ export default function ProductsPage() {
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            onClick={() => handleEdit(producto.id)}
+                                                            onClick={() => handleEdit(producto)}
                                                             className="hover:bg-blue-500/10 hover:text-blue-600"
                                                         >
                                                             <Edit className="h-4 w-4" />

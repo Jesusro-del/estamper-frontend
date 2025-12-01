@@ -1,8 +1,11 @@
 import type { FC } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "../../../components/ui/field";
+import { CreateProduct, UpdateProduct } from "../../api/product.service";
+import type { ResponseProductsDTO } from "../../dto/ResponseProductsDTO";
 
 type UpsertTestModal = (
     | {
@@ -10,10 +13,12 @@ type UpsertTestModal = (
     }
     | {
         action: "UPDATE";
+        product: ResponseProductsDTO;
     }
 ) & {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSuccess?: () => void;
 };
 
 export const UpsertTestModal: FC<UpsertTestModal> = ({
@@ -21,6 +26,88 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
     onOpenChange,
     ...rest
 }) => {
+    const [idProduct, setIdProduct] = useState("");
+    const [nameProduct, setNameProduct] = useState("");
+    const [stock, setStock] = useState("");
+    const [isPending, setIsPending] = useState(false);
+
+    // Cargar datos del producto al editar
+    useEffect(() => {
+        if (rest.action === "UPDATE" && rest.product) {
+            setIdProduct(rest.product.idProduct);
+            setNameProduct(rest.product.nameProduct);
+            setStock(rest.product.Stock.toString());
+        } else {
+            // Limpiar formulario al crear
+            setIdProduct("");
+            setNameProduct("");
+            setStock("");
+        }
+    }, [rest.action, rest.action === "UPDATE" ? rest.product : null]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!nameProduct.trim() || !stock.trim()) {
+            alert("Por favor complete todos los campos");
+            return;
+        }
+
+        const stockNumber = parseInt(stock);
+        if (isNaN(stockNumber) || stockNumber < 0) {
+            alert("El stock debe ser un número válido");
+            return;
+        }
+
+        setIsPending(true);
+
+        try {
+            if (rest.action === "CREATE") {
+                if (!idProduct.trim()) {
+                    alert("Por favor ingrese el ID del producto");
+                    setIsPending(false);
+                    return;
+                }
+
+                await CreateProduct({
+                    idProduct: idProduct.trim(),
+                    nameProduct: nameProduct.trim(),
+                    Stock: stockNumber,
+                });
+            } else {
+                await UpdateProduct(rest.product.idProduct, {
+                    idProduct: rest.product.idProduct,
+                    nameProduct: nameProduct.trim(),
+                    Stock: stockNumber,
+                });
+            }
+
+            // Limpiar formulario
+            setIdProduct("");
+            setNameProduct("");
+            setStock("");
+
+            // Llamar callback de éxito
+            if (rest.onSuccess) {
+                rest.onSuccess();
+            }
+
+            // Cerrar modal
+            onOpenChange(false);
+        } catch (error) {
+            console.error("Error al guardar producto:", error);
+            alert(`Error al ${rest.action === "CREATE" ? "crear" : "actualizar"} producto`);
+        } finally {
+            setIsPending(false);
+        }
+    };
+
+    const handleCancel = () => {
+        setIdProduct("");
+        setNameProduct("");
+        setStock("");
+        onOpenChange(false);
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,48 +123,58 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                 </DialogHeader>
                 {/**formulario */}
                 <div className="w-full max-w-md">
-                    <form>
+                    <form onSubmit={handleSubmit}>
                         <FieldGroup>
                             <FieldSet>
                                 <FieldGroup>
                                     {rest.action === "CREATE" && (
                                         <Field>
-                                            <FieldLabel htmlFor="checkout-7j9-card-name-43j">
+                                            <FieldLabel htmlFor="idProduct">
                                                 Id Producto
                                             </FieldLabel>
                                             <Input
-                                                id="checkout-7j9-card-name-43j"
+                                                id="idProduct"
                                                 placeholder="P-01"
+                                                value={idProduct}
+                                                onChange={(e) => setIdProduct(e.target.value)}
                                                 required
                                             />
                                         </Field>)
                                     }
                                     <Field>
-                                        <FieldLabel htmlFor="checkout-7j9-card-number-uw1">
+                                        <FieldLabel htmlFor="nameProduct">
                                             Nombre Producto:
                                         </FieldLabel>
                                         <Input
-                                            id="checkout-7j9-card-number-uw1"
-                                            placeholder="1234 5678 9012 3456"
+                                            id="nameProduct"
+                                            placeholder="Nombre del producto"
+                                            value={nameProduct}
+                                            onChange={(e) => setNameProduct(e.target.value)}
                                             required
                                         />
                                     </Field>
                                     <Field>
-                                        <FieldLabel htmlFor="checkout-7j9-card-number-uw1">
+                                        <FieldLabel htmlFor="stock">
                                             Stock:
                                         </FieldLabel>
                                         <Input
-                                            id="checkout-7j9-card-number-uw1"
-                                            placeholder="1234 5678 9012 3456"
+                                            id="stock"
+                                            type="number"
+                                            placeholder="100"
+                                            value={stock}
+                                            onChange={(e) => setStock(e.target.value)}
+                                            min="0"
                                             required
                                         />
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>
                             <Field orientation="horizontal">
-                                <Button type="submit">Submit</Button>
-                                <Button variant="outline" type="button">
-                                    Cancel
+                                <Button type="submit" disabled={isPending}>
+                                    {isPending ? "Procesando..." : (rest.action === "CREATE" ? "Crear" : "Actualizar")}
+                                </Button>
+                                <Button variant="outline" type="button" onClick={handleCancel} disabled={isPending}>
+                                    Cancelar
                                 </Button>
                             </Field>
                         </FieldGroup>
@@ -86,21 +183,18 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                 <DialogFooter className="mt-4">
                     <Button
                         variant="outline"
-                        onClick={() => onOpenChange(false)}
+                        onClick={handleCancel}
+                        disabled={isPending}
                         className="text-gray-700 hover:bg-gray-100 border-gray-300"
                     >
                         Cancelar
                     </Button>
                     <Button
                         className="bg-blue-800 hover:bg-blue-900 text-white"
-                    // onClick={() => {
-                    //     if (formRef.current) {
-                    //         formRef.current.requestSubmit();
-                    //     }
-                    // }}
-                    // disabled={isPending}
+                        onClick={handleSubmit}
+                        disabled={isPending}
                     >
-                        {rest.action === "CREATE" ? "Crear" : "Actualizar"}
+                        {isPending ? "Procesando..." : (rest.action === "CREATE" ? "Crear" : "Actualizar")}
                     </Button>
                 </DialogFooter>
             </DialogContent>
