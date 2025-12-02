@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Home, LogOut, User } from "lucide-react";
 
 import {
     Tooltip,
@@ -28,7 +28,11 @@ type ProductoUI = {
     imageUrl: string;
 };
 
-export default function ProductsPage() {
+interface ProductsPageProps {
+    onLogout?: () => void;
+}
+
+export default function ProductsPage({ onLogout }: ProductsPageProps) {
     const [productos, setProductos] = useState<ProductoUI[]>([]);
     const [, setIsLoading] = useState(false);
     const [isDialogInsertOpen, setIsDialogInsertOpen] = useState(false);
@@ -89,20 +93,54 @@ export default function ProductsPage() {
         console.log("Eliminar producto:", id);
     };
 
+    const navigateToLanding = () => {
+        if (typeof window !== 'undefined' && (window as any).navigateTo) {
+            (window as any).navigateTo('landing');
+        }
+    };
+
+    const handleLogout = () => {
+        if (onLogout) {
+            onLogout();
+        }
+    };
+
 
     return (
         <TooltipProvider>
             <div className="min-h-screen bg-background p-8 w-full">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-8 gap-4">
-                        <h1 className="text-foreground">Gestión de Productos</h1>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-4">
+                            <Button
+                                variant="outline"
+                                onClick={navigateToLanding}
+                                className="border-blue-800 text-blue-800 hover:bg-blue-50"
+                            >
+                                <Home className="mr-2 h-4 w-4" />
+                                Inicio
+                            </Button>
+                            <h1 className="text-foreground">Gestión de Productos</h1>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg mr-2">
+                                <User className="h-4 w-4 text-blue-800" />
+                                <span className="text-sm text-blue-800 font-medium">admin@estamper.com</span>
+                            </div>
                             <Button
                                 onClick={() => setIsDialogInsertOpen(true)}
                                 className="bg-blue-800 hover:bg-blue-900"
                             >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Nuevo Producto
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleLogout}
+                                className="border-red-600 text-red-600 hover:bg-red-50"
+                            >
+                                <LogOut className="mr-2 h-4 w-4" />
+                                Cerrar Sesión
                             </Button>
                         </div>
                     </div>

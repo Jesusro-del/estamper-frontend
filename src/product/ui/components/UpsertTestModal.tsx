@@ -82,6 +82,8 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                     idProduct: idProduct.trim(),
                     nameProduct: nameProduct.trim(),
                     Stock: stockNumber,
+                    image: undefined, // Manejo de imagen pendiente
+
                 });
             } else {
                 await UpdateProduct(rest.product.idProduct, {

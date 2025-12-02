@@ -40,6 +40,7 @@ interface CreateProductDTO {
   idProduct: string;
   nameProduct: string;
   Stock: number;
+  image?: PresignRespDTO["image"];
 }
 
 const API_BASE = "https://a2lum56xy0.execute-api.us-east-1.amazonaws.com";
