@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -30,6 +30,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
     const [nameProduct, setNameProduct] = useState("");
     const [stock, setStock] = useState("");
     const [isPending, setIsPending] = useState(false);
+    const pendingRef = useRef(false);
 
     // Cargar datos del producto al editar
     useEffect(() => {
@@ -45,8 +46,11 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
         }
     }, [rest.action, rest.action === "UPDATE" ? rest.product : null]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.SyntheticEvent) => {
+        e?.preventDefault();
+
+        // Prevent duplicate/parallel submissions
+        if (pendingRef.current) return;
 
         if (!nameProduct.trim() || !stock.trim()) {
             alert("Por favor complete todos los campos");
@@ -59,16 +63,16 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
             return;
         }
 
+        if (rest.action === "CREATE" && !idProduct.trim()) {
+            alert("Por favor ingrese el ID del producto");
+            return;
+        }
+
         setIsPending(true);
+        pendingRef.current = true;
 
         try {
             if (rest.action === "CREATE") {
-                if (!idProduct.trim()) {
-                    alert("Por favor ingrese el ID del producto");
-                    setIsPending(false);
-                    return;
-                }
-
                 await CreateProduct({
                     idProduct: idProduct.trim(),
                     nameProduct: nameProduct.trim(),
@@ -98,11 +102,15 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
             console.error("Error al guardar producto:", error);
             alert(`Error al ${rest.action === "CREATE" ? "crear" : "actualizar"} producto`);
         } finally {
+            pendingRef.current = false;
             setIsPending(false);
         }
     };
 
     const handleCancel = () => {
+        // Prevent cancelling while a request is in-flight
+        if (pendingRef.current) return;
+
         setIdProduct("");
         setNameProduct("");
         setStock("");
@@ -169,14 +177,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>
-                            <Field orientation="horizontal">
-                                <Button type="submit" disabled={isPending}>
-                                    {isPending ? "Procesando..." : (rest.action === "CREATE" ? "Crear" : "Actualizar")}
-                                </Button>
-                                <Button variant="outline" type="button" onClick={handleCancel} disabled={isPending}>
-                                    Cancelar
-                                </Button>
-                            </Field>
+                            
                         </FieldGroup>
                     </form>
                 </div>
@@ -190,6 +191,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                         Cancelar
                     </Button>
                     <Button
+                        type="button"
                         className="bg-blue-800 hover:bg-blue-900 text-white"
                         onClick={handleSubmit}
                         disabled={isPending}
