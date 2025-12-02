@@ -17,7 +17,7 @@ import {
     TableRow,
 } from "../../components/ui/table";
 
-import { CreateProduct, GetProduct, GetProducts, UpdateProduct } from "../api/product.service";
+import { GetProduct, GetProducts } from "../api/product.service";
 import type { ResponseProductsDTO } from "../dto/ResponseProductsDTO";
 import { UpsertTestModal } from "../ui/components/UpsertTestModal";
 
@@ -25,11 +25,12 @@ type ProductoUI = {
     id: string;
     nombre: string;
     stock: number;
+    imageUrl: string;
 };
 
 export default function ProductsPage() {
     const [productos, setProductos] = useState<ProductoUI[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [, setIsLoading] = useState(false);
     const [isDialogInsertOpen, setIsDialogInsertOpen] = useState(false);
     const [isDialogUpdateOpen, setIsDialogUpdateOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<ResponseProductsDTO | null>(null);
@@ -49,6 +50,7 @@ export default function ProductsPage() {
                 id: item.idProduct,
                 nombre: item.nameProduct,
                 stock: item.Stock,
+                imageUrl: item.imageUrl,
             }));
 
             setProductos(data);
@@ -78,6 +80,7 @@ export default function ProductsPage() {
             idProduct: producto.id,
             nameProduct: producto.nombre,
             Stock: producto.stock,
+            imageUrl: producto.imageUrl,
         });
         setIsDialogUpdateOpen(true);
     };
@@ -145,6 +148,18 @@ export default function ProductsPage() {
                                                     {producto.stock} unidades
                                                 </span>
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+
+                                            <a
+                                                href={producto.imageUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-muted-foreground"
+                                            >
+                                                Accede a la imagen
+                                            </a>
+
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">

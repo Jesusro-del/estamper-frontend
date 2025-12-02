@@ -29,6 +29,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
     const [idProduct, setIdProduct] = useState("");
     const [nameProduct, setNameProduct] = useState("");
     const [stock, setStock] = useState("");
+    const [imageFiles, setImageFiles] = useState<FileList | null>(null);
     const [isPending, setIsPending] = useState(false);
 
     // Cargar datos del producto al editar
@@ -37,13 +38,21 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
             setIdProduct(rest.product.idProduct);
             setNameProduct(rest.product.nameProduct);
             setStock(rest.product.Stock.toString());
+            setImageFiles(null);
         } else {
             // Limpiar formulario al crear
             setIdProduct("");
             setNameProduct("");
             setStock("");
+            setImageFiles(null);
         }
     }, [rest.action, rest.action === "UPDATE" ? rest.product : null]);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setImageFiles(e.target.files);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -86,6 +95,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
             setIdProduct("");
             setNameProduct("");
             setStock("");
+            setImageFiles(null);
 
             // Llamar callback de éxito
             if (rest.onSuccess) {
@@ -106,6 +116,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
         setIdProduct("");
         setNameProduct("");
         setStock("");
+        setImageFiles(null);
         onOpenChange(false);
     };
 
@@ -166,6 +177,29 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                                             min="0"
                                             required
                                         />
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="images">
+                                            Imagen(es):
+                                        </FieldLabel>
+                                        <Input
+                                            id="images"
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleImageChange}
+                                            className="cursor-pointer"
+                                        />
+                                        {imageFiles && imageFiles.length > 0 && (
+                                            <div className="mt-2 text-sm text-muted-foreground">
+                                                <p className="font-medium">Archivos seleccionados:</p>
+                                                <ul className="list-disc list-inside">
+                                                    {Array.from(imageFiles).map((file, idx) => (
+                                                        <li key={idx}>{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>
