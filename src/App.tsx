@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import ChatWidget from "./components/ui/ChatWidget.jsx";
+
+
 import ProductsPage from './product/pages/ProductsPage'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import { useState, useEffect } from "react";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'products'>('landing')
@@ -48,15 +51,11 @@ function App() {
 
   return (
     <>
-      {currentPage === 'landing' ? (
-        <LandingPage />
-      ) : currentPage === 'login' ? (
-        <LoginPage onLoginSuccess={handleLoginSuccess} />
-      ) : (
-        <ProductsPage onLogout={handleLogout} />
-      )}
+      <ProductsPage></ProductsPage>
+      <ChatWidget/>
     </>
   )
 }
 
 export default App
+
