@@ -21,7 +21,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         setIsLoading(true);
 
         // Validar credenciales
-        if (email === "admin@estamper.com" && password === "admin123!") {
+        if (email === "admin@estamper.com" && password === "admin123!" ||
+            email === "gioaldave121@gmail.com" && password === "giovanni123!")
+            {
             // Guardar sesión
             localStorage.setItem("isAuthenticated", "true");
             localStorage.setItem("userEmail", email);

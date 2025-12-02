@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Eye, Edit, Trash2, Home, LogOut, User } from "lucide-react";
+import * as XLSX from "xlsx"; // Import the xlsx library
 
 import {
     Tooltip,
@@ -66,9 +67,25 @@ export default function ProductsPage({ onLogout }: ProductsPageProps) {
         }
     };
 
+    const handleExportToExcel = () => {
+        // Prepare data for Excel
+        const worksheetData = productos.map((producto) => ({
+            "ID Producto": producto.id,
+            "Nombre del Producto": producto.nombre,
+            Stock: producto.stock,
+            "URL de Imagen": producto.imageUrl,
+        }));
 
+        // Create a new workbook and worksheet
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
 
-console.log("¡Archivo subido exitosamente!");
+        // Append the worksheet to the workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
+
+        // Write the workbook and trigger download
+        XLSX.writeFile(workbook, "Productos.xlsx");
+    };
 
     const handleView = async (id: string) => {
         try {
@@ -108,7 +125,6 @@ console.log("¡Archivo subido exitosamente!");
             onLogout();
         }
     };
-
 
     return (
         <TooltipProvider>
@@ -166,7 +182,6 @@ console.log("¡Archivo subido exitosamente!");
                         />
                     )}
 
-
                     <div className="border rounded-lg bg-card shadow-sm">
                         <Table>
                             <TableHeader>
@@ -192,7 +207,6 @@ console.log("¡Archivo subido exitosamente!");
                                             </div>
                                         </TableCell>
                                         <TableCell>
-
                                             <a
                                                 href={producto.imageUrl}
                                                 target="_blank"
@@ -201,7 +215,6 @@ console.log("¡Archivo subido exitosamente!");
                                             >
                                                 Accede a la imagen
                                             </a>
-
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
@@ -267,6 +280,9 @@ console.log("¡Archivo subido exitosamente!");
                             </TableBody>
                         </Table>
                     </div>
+                    <Button onClick={handleExportToExcel} className="mt-4 bg-green-600 hover:bg-green-700 text-white">
+                        Descargar Reporte
+                    </Button>
                 </div>
             </div>
         </TooltipProvider>

@@ -264,23 +264,6 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                         </FieldGroup>
                     </form>
                 </div>
-                <DialogFooter className="mt-4">
-                    <Button
-                        variant="outline"
-                        onClick={handleCancel}
-                        disabled={isPending}
-                        className="text-gray-700 hover:bg-gray-100 border-gray-300"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        className="bg-blue-800 hover:bg-blue-900 text-white"
-                        onClick={handleSubmit}
-                        disabled={isPending}
-                    >
-                        {isPending ? "Procesando..." : (rest.action === "CREATE" ? "Crear" : "Actualizar")}
-                    </Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
