@@ -72,13 +72,23 @@ export const uploadToS3 = async (uploadUrl: string, file: File) => {
 };
 
 export const CreateProduct = async (data: CreateProductDTO) => {
+  console.log("CreateProduct - Datos enviados:", JSON.stringify(data, null, 2));
+
   const r = await fetch(`${API_BASE}/producto`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!r.ok) throw new Error(`createProduct ${r.status}`);
-  return r.json();
+
+  if (!r.ok) {
+    const errorText = await r.text();
+    console.error("Error en CreateProduct:", errorText);
+    throw new Error(`createProduct ${r.status}: ${errorText}`);
+  }
+
+  const response = await r.json();
+  console.log("CreateProduct - Respuesta:", response);
+  return response;
 };
 // export const CreateProduct = async (
 //   data: CreateProductDTO
@@ -106,12 +116,15 @@ interface UpdateProductDTO {
   idProduct: string;
   nameProduct: string;
   Stock: number;
+  image?: PresignRespDTO["image"];
 }
 
 export const UpdateProduct = async (
   idProduct: string,
   data: UpdateProductDTO
 ): Promise<ResponseProductsDTO> => {
+  console.log("UpdateProduct - Datos enviados:", JSON.stringify(data, null, 2));
+
   const response = await fetch(
     `https://a2lum56xy0.execute-api.us-east-1.amazonaws.com/producto/${idProduct}`,
     {
@@ -124,9 +137,14 @@ export const UpdateProduct = async (
   );
 
   if (!response.ok) {
-    throw new Error(`Error al actualizar producto: ${response.status}`);
+    const errorText = await response.text();
+    console.error("Error en UpdateProduct:", errorText);
+    throw new Error(
+      `Error al actualizar producto: ${response.status} - ${errorText}`
+    );
   }
 
   const update: ResponseProductsDTO = await response.json();
+  console.log("UpdateProduct - Respuesta:", update);
   return update;
 };

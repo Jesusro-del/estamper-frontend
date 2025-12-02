@@ -5,7 +5,7 @@ import LoginPage from './pages/LoginPage'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'products'>('landing')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [, setIsAuthenticated] = useState(false)
 
   // Verificar autenticación al cargar
   useEffect(() => {

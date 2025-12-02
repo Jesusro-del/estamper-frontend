@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "../../../components/ui/field";
-import { CreateProduct, UpdateProduct } from "../../api/product.service";
+import { CreateProduct, UpdateProduct, presignUpload, uploadToS3 } from "../../api/product.service";
 import type { ResponseProductsDTO } from "../../dto/ResponseProductsDTO";
 
 type UpsertTestModal = (
@@ -31,6 +31,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
     const [stock, setStock] = useState("");
     const [imageFiles, setImageFiles] = useState<FileList | null>(null);
     const [isPending, setIsPending] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState("");
 
     // Cargar datos del producto al editar
     useEffect(() => {
@@ -69,28 +70,66 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
         }
 
         setIsPending(true);
+        setUploadStatus("");
 
         try {
-            if (rest.action === "CREATE") {
-                if (!idProduct.trim()) {
-                    alert("Por favor ingrese el ID del producto");
-                    setIsPending(false);
-                    return;
+            const productId = rest.action === "CREATE" ? idProduct.trim() : rest.product.idProduct;
+
+            if (rest.action === "CREATE" && !idProduct.trim()) {
+                alert("Por favor ingrese el ID del producto");
+                setIsPending(false);
+                return;
+            }
+
+            // Manejar carga de imágenes si hay archivos seleccionados
+            let imageMetadata = undefined;
+            if (imageFiles && imageFiles.length > 0) {
+                const file = imageFiles[0]; // Tomar la primera imagen
+
+                try {
+                    setUploadStatus("Preparando imagen...");
+                    // 1. Obtener URL pre-firmada y metadata
+                    const presignResp = await presignUpload(productId, file);
+
+                    setUploadStatus("Subiendo imagen a S3...");
+                    // 2. Subir archivo a S3
+                    await uploadToS3(presignResp.uploadUrl, file);
+
+                    setUploadStatus("Imagen cargada exitosamente");
+                    // 3. Preparar metadata de la imagen para DynamoDB
+                    imageMetadata = {
+                        bucket: presignResp.image.bucket,
+                        key: presignResp.image.key,
+                        filename: presignResp.image.filename,
+                        contentType: presignResp.image.contentType,
+                        region: presignResp.image.region
+                    };
+
+                    console.log("Metadata de imagen preparada:", imageMetadata);
+                } catch (uploadError) {
+                    console.error("Error al subir imagen:", uploadError);
+                    setUploadStatus("");
+                    alert("Error al subir la imagen. El producto se guardará sin imagen.");
                 }
+            }
 
-                await CreateProduct({
-                    idProduct: idProduct.trim(),
-                    nameProduct: nameProduct.trim(),
-                    Stock: stockNumber,
-                    image: undefined, // Manejo de imagen pendiente
+            setUploadStatus(rest.action === "CREATE" ? "Creando producto..." : "Actualizando producto...");
 
-                });
+            // Preparar datos del producto
+            const productData = {
+                idProduct: productId,
+                nameProduct: nameProduct.trim(),
+                Stock: stockNumber,
+                ...(imageMetadata && { image: imageMetadata })
+            };
+
+            console.log("Datos del producto a enviar:", productData);
+
+            // Crear o actualizar producto
+            if (rest.action === "CREATE") {
+                await CreateProduct(productData);
             } else {
-                await UpdateProduct(rest.product.idProduct, {
-                    idProduct: rest.product.idProduct,
-                    nameProduct: nameProduct.trim(),
-                    Stock: stockNumber,
-                });
+                await UpdateProduct(productId, productData);
             }
 
             // Limpiar formulario
@@ -98,6 +137,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
             setNameProduct("");
             setStock("");
             setImageFiles(null);
+            setUploadStatus("");
 
             // Llamar callback de éxito
             if (rest.onSuccess) {
@@ -119,6 +159,7 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
         setNameProduct("");
         setStock("");
         setImageFiles(null);
+        setUploadStatus("");
         onOpenChange(false);
     };
 
@@ -205,6 +246,13 @@ export const UpsertTestModal: FC<UpsertTestModal> = ({
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>
+
+                            {uploadStatus && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                                    <p className="text-sm text-blue-700 font-medium">{uploadStatus}</p>
+                                </div>
+                            )}
+
                             <Field orientation="horizontal">
                                 <Button type="submit" disabled={isPending}>
                                     {isPending ? "Procesando..." : (rest.action === "CREATE" ? "Crear" : "Actualizar")}

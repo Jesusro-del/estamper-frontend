@@ -66,6 +66,10 @@ export default function ProductsPage({ onLogout }: ProductsPageProps) {
         }
     };
 
+
+
+console.log("¡Archivo subido exitosamente!");
+
     const handleView = async (id: string) => {
         try {
             const producto = await GetProduct(id);
